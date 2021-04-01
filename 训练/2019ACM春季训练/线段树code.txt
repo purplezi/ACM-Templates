@@ -1,0 +1,129 @@
+#include<iostream>
+#include<cstring>
+#include<string>
+#include<algorithm>
+#include<vector>
+#include<cstdio>
+#include<queue>
+using namespace std;
+typedef long long ll;
+#define MS(x) memset(x,0,sizeof(x));
+#define MS1(x) memset(x,-1,sizeof(x));
+#define Lson(x) x<<1
+#define Rson(x) x<<1|1
+const int maxn = 1e6 + 5;
+struct Segment_Tree
+{
+	int l, r;
+	int sum;
+	int lazy;
+	inline void update(int val)
+	{
+		lazy = val;
+		sum = (r-l+1)*val;
+	}
+}tree[maxn<<4];
+int A[maxn];//原数组
+
+void push_up(int x)
+{
+	tree[x].sum = tree[Lson(x)].sum + tree[Rson(x)].sum;
+}
+
+void push_down(int x)
+{
+	if (!tree[x].lazy) return;
+	int lazy = tree[x].lazy;
+	tree[Lson(x)].update(lazy);
+	tree[Rson(x)].update(lazy);
+	tree[x].lazy = 0;
+}
+
+void build(int x, int l, int r)//当前在数组中的位置 左 右 
+{
+	tree[x].l = l;
+	tree[x].r = r;
+	tree[x].sum = tree[x].lazy = 0;
+	if (l == r)
+	{
+		tree[x].sum = A[l];
+		return;
+	}
+
+	int mid = (l + r) >> 1;
+	build(Lson(x), l, mid);
+	build(Rson(x), mid + 1, r);
+	push_up(x);
+}
+
+void update(int x, int pos, int val)//当前在数组中的位置,需要修改的位置,大小
+{
+	if (tree[x].l == pos&&tree[x].r == pos)
+	{
+		tree[x].update(val);
+		return;
+	}
+	int mid = (tree[x].l + tree[x].r) >> 1;
+	if (pos <= mid) update(Lson(x), pos, val);
+	else update(Rson(x), pos, val);
+	push_up(x);
+}
+
+void update(int x, int l, int r, int val)
+{
+	if (tree[x].l == l&&tree[x].r == r)
+	{
+		tree[x].update(val);
+		return;
+	}
+	push_down(x);
+	int mid = (tree[x].l + tree[x].r) >> 1;
+	if (r <= mid) update(Lson(x), l, r, val);
+	else if (l > mid) update(Rson(x), l, r, val);
+	else
+	{
+		update(Lson(x), l, mid, val);
+		update(Rson(x), mid + 1, r, val);
+	}
+	push_up(x);
+}
+
+int query(int x, int l, int r)
+{
+	if (tree[x].l == l&&tree[x].r == r) return tree[x].sum;
+	push_down(x);
+	int mid = (tree[x].l + tree[x].r) >> 1;
+	if (r <= mid) return query(Lson(x), l, r);
+	else if (l > mid) return query(Rson(x), l, r);
+	else return query(Lson(x), l, mid) + query(Rson(x), mid + 1, r);
+}
+
+int main()
+{
+	int N;
+	while (scanf("%d",&N)!=EOF)
+	{
+		for (int i = 1; i <= N; i++)
+		{
+			scanf("%d", &A[i]);
+		}
+		build(1, 1, N);
+		int Q;
+		scanf("%d", &Q);
+		int a, b, c, d;
+		while (Q--)
+		{
+			scanf("%d", &a);
+			if (a)
+			{
+				scanf("%d%d%d", &b, &c, &d);
+				update(1, b, c, d);
+			}
+			else
+			{
+				scanf("%d%d", &b, &c);
+				printf("%d\n",query(1,b,c));
+			}
+		}
+	}
+}
